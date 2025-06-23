@@ -1,0 +1,12 @@
+# Build output
+bin/
+
+# Worktree directories
+worktree/
+
+# Configuration file
+.tmux-workers.json
+
+# Test output
+*.test
+*.out
