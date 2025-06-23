@@ -1,15 +1,15 @@
-# tw (tmux worker) CLI
+# tw (tmux worker) manager
 
 tmuxベースのワーカー管理CLIツール。Issue番号や機能名を指定して、以下を自動的に作成・管理します：
 
 - tmuxセッションとペイン分割
 - git worktreeの作成
-- Claudeの起動
+- init commandの実行
 
 ## 機能
 
 - **init/destroy**: tmuxセッションの初期化・削除
-- **add**: 新しいワーカーを作成（自動でClaudeを起動）
+- **add**: 新しいワーカーを作成（設定されたcommandを起動）
 - **list**: 全ワーカーの一覧表示
 - **remove**: ワーカーの削除
 - **status**: 特定ワーカーの詳細状態表示
@@ -38,7 +38,7 @@ cd /project-A
 tw init              # プロジェクトAで初期化
 tw add feature-1     # ✅ 成功
 
-cd /project-B  
+cd /project-B
 tw add feature-2     # ❌ 失敗（プロジェクトAで初期化されているため）
 
 tw init              # プロジェクトBで新規初期化
@@ -50,37 +50,30 @@ tw add feature-2     # ✅ 成功
 - Go 1.19以降
 - tmux
 - git
-- Claude CLI (optional, 設定可能)
 
 ## インストール
 
-### 1. リポジトリのクローン
+### go install を使用（推奨）
 
 ```bash
-git clone <repository-url>
-cd claude-code-worker-manager
+go install github.com/nakamasato/tmux-worker-manager@latest
+ln -s $(which tmux-worker-manager) $(go env GOPATH)/bin/tw
 ```
 
-### 2. ビルドとインストール
+### または、ソースからビルド
 
 ```bash
+# リポジトリのクローン
+git clone https://github.com/nakamasato/tmux-worker-manager.git
+cd tmux-worker-manager
+
 # ビルド
 make build
 
-# ユーザー用インストール (推奨)
-make install-user
-
-# または、システム全体にインストール
-make install
-```
-
-### 3. PATHの設定
-
-`~/.local/bin` を PATH に追加していない場合：
-
-```bash
-echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
-source ~/.bashrc
+# インストール
+make install-user  # ~/.local/bin にインストール
+# または
+make install      # /usr/local/bin にインストール（sudo必要）
 ```
 
 ## 使用方法
@@ -232,27 +225,41 @@ tw init --command "npx claude" --worktree-prefix "features"
 
 ## ワーカーの構成
 
-各ワーカーは以下の構成で作成されます：
+各ワーカーは専用のtmuxペインとして作成されます。`tw init` で初期セッションを作成し、`tw add` で新しいワーカーペインを追加します。
+
+### tmuxセッション全体の構成例
+
+複数のワーカーを追加した後の、tmuxセッション内のペイン配置例：
 
 ```
 ┌─────────────────┬─────────────────┐
 │                 │                 │
-│   Main Pane     │   Git Pane      │
-│   (開発作業)     │   (git操作)      │
+│  プロジェクト    │  issue-123      │
+│  ルート         │  (ワーカー1)     │
 │                 │                 │
 ├─────────────────┼─────────────────┤
 │                 │                 │
-│   (空)          │   Claude        │
-│                 │   (AI支援)       │
+│  feature-auth   │  bug-fix        │
+│  (ワーカー2)     │  (ワーカー3)     │
 │                 │                 │
 └─────────────────┴─────────────────┘
 ```
 
-### ペインの役割
+### ペインの構造
 
-- **Main Pane**: メインの開発作業用
-- **Git Pane**: git操作専用
-- **Claude Pane**: Claude AIとの対話用
+```
+tmuxセッション（例: myproject）
+├── ペイン0: プロジェクトルート（初期ペイン）
+├── ペイン1: ワーカー1（例: issue-123）
+├── ペイン2: ワーカー2（例: feature-auth）
+└── ペインN: ワーカーN（例: bug-fix）
+```
+
+### ワーカーペインの特徴
+
+- **独立したworktree**: 各ワーカーは専用のgit worktreeを持ちます
+- **作業ディレクトリ**: 各ペインの作業ディレクトリは対応するworktreeに設定されます
+- **初期化コマンド**: 設定されたコマンド（例: Claude AI）がペイン作成時に自動実行されます
 
 ## ディレクトリ構造
 
@@ -370,11 +377,21 @@ tmuxペインのレイアウトやコマンドの詳細な調整は `main.go` �
 
 ## トラブルシューティング
 
-### tmuxセッションが見つからない
+### tmux関連
+
+#### セッションが見つからない・接続できない
 
 ```bash
-# セッション一覧を確認
+# tmuxセッション一覧を確認
 tmux list-sessions
+tmux ls
+
+# 特定のセッションの詳細を確認
+tmux list-windows -t <session-name>
+tmux list-panes -t <session-name>
+
+# セッションの存在確認
+tmux has-session -t <session-name>
 
 # セッションを初期化
 tw init
@@ -383,11 +400,42 @@ tw init
 pwd
 ```
 
-### git worktreeが作成されない
+#### ペインの確認と操作
+
+```bash
+# 全ペインをID付きで表示
+tmux list-panes -a -F "#{session_name}:#{window_index}.#{pane_index} #{pane_id} #{pane_title}"
+
+# 特定セッションのペイン一覧
+tmux list-panes -t <session-name> -F "#{pane_index} #{pane_id} #{pane_title}"
+
+# ペインのタイトルを確認
+tmux display-message -t <session-name> -p "#{pane_title}"
+
+# 手動でペインを削除
+tmux kill-pane -t <pane-id>
+```
+
+### git worktree関連
+
+#### worktreeが作成されない・見つからない
 
 ```bash
 # gitリポジトリ内で実行していることを確認
 git status
+
+# 既存のworktree一覧を確認
+git worktree list
+
+# worktreeの詳細情報を表示
+git worktree list --verbose
+
+# 特定のworktreeを手動で削除
+git worktree remove <worktree-path>
+git worktree remove --force <worktree-path>  # 強制削除
+
+# 無効なworktreeをクリーンアップ
+git worktree prune
 
 # worktreeディレクトリの権限確認
 ls -la worktree/
@@ -396,24 +444,9 @@ ls -la worktree/
 mkdir -p worktree
 ```
 
-### Claudeが起動しない
+### 整合性の問題
 
-```bash
-# Claude CLIの確認
-which claude
-claude --version
-
-# 設定を確認
-tw config get
-
-# Claudeコマンドを再設定
-tw config set "claude --dangerously-skip-permissions"
-
-# npxを使用する場合
-tw config set "npx claude"
-```
-
-### worktreeとpaneの不整合
+#### worktreeとpaneの不整合
 
 ```bash
 # 整合性をチェック
@@ -421,9 +454,14 @@ tw check
 
 # 自動修復を実行
 tw repair
+
+# 手動で状態を確認
+tw list
+git worktree list
+tmux list-panes -a
 ```
 
-### 設定がリセットされる
+#### 設定ファイルの問題
 
 設定は `.tmux-workers.json` に保存されるため、このファイルを削除すると設定がリセットされます：
 
@@ -433,6 +471,12 @@ cat .tmux-workers.json
 
 # 設定を再確認
 tw config
+
+# 設定ファイルのバックアップ
+cp .tmux-workers.json .tmux-workers.json.backup
+
+# 設定ファイルを手動で編集（慎重に）
+vim .tmux-workers.json
 ```
 
 ## ライセンス
