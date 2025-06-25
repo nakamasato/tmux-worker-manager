@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Go CLI tool called `tw` (tmux worker) that manages development workflows by integrating:
+This is a Go CLI tool called `gtw` (git-tmux-workspace) that manages development workflows by integrating:
 - Git worktrees for isolated feature development
 - tmux sessions with structured pane layouts
 - Claude AI integration for development assistance
@@ -14,7 +14,7 @@ The tool creates isolated development environments where each "worker" has its o
 ## Build and Development Commands
 
 ### Core Commands
-- `make build` - Build the binary to `bin/tw`
+- `make build` - Build the binary to `bin/gtw`
 - `make install-user` - Install to `~/.local/bin` (recommended, no sudo)
 - `make install` - Install system-wide to `/usr/local/bin` (requires sudo)
 - `make clean` - Remove build artifacts and `.tmux-workers.json`
@@ -58,8 +58,8 @@ Each worker creates a 3-pane tmux session:
 - Pane 2: Claude AI interaction
 
 #### Session Naming Convention
-- Currently uses `worker-<id>` format (e.g., `worker-issue-123`)
-- README documents migration to `<project>-claude-code` format using current directory name
+- Uses `<project>` format (e.g., current directory name like `my-project`)
+- Each worker creates panes within this session rather than separate sessions
 
 ### Configuration Management
 - Uses `.tmux-workers.json` for persistent worker state

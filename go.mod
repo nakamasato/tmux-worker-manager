@@ -1,4 +1,4 @@
-module github.com/nakamasato/tmux-worker-manager
+module github.com/nakamasato/git-tmux-workspace
 
 go 1.24.3
 

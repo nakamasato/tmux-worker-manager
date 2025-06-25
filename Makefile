@@ -1,6 +1,6 @@
-# Makefile for tw (tmux worker) CLI
+# Makefile for gtw (git-tmux-workspace) CLI
 
-BINARY_NAME=tw
+BINARY_NAME=gtw
 BUILD_DIR=bin
 INSTALL_DIR=/usr/local/bin
 
@@ -70,7 +70,7 @@ dev: build
 
 # Show help
 help:
-	@echo "tw (tmux worker) CLI Build System"
+	@echo "gtw (git-tmux-workspace) CLI Build System"
 	@echo ""
 	@echo "Targets:"
 	@echo "  build          Build the binary"
@@ -110,7 +110,7 @@ setup:
 	@echo "1. Run 'make build' to build the CLI"
 	@echo "2. Run 'make install-user' to install"
 	@echo "3. Add ~/.local/bin to your PATH if needed"
-	@echo "4. Run 'tw add issue-123' to create your first worker"
+	@echo "4. Run 'gtw add issue-123' to create your first worker"
 
 # Show current workers status
 status:

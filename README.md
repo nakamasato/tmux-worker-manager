@@ -1,6 +1,6 @@
-# tw (tmux worker) manager
+# gtw (git-tmux-workspace)
 
-tmuxベースのワーカー管理CLIツール。Issue番号や機能名を指定して、以下を自動的に作成・管理します：
+Git worktreeとtmuxを統合したワークスペース管理CLIツール。Issue番号や機能名を指定して、以下を自動的に作成・管理します：
 
 - tmuxセッションとペイン分割
 - git worktreeの作成
@@ -28,21 +28,21 @@ tmuxセッション名は `<project>` の形式で作成されます。
 
 セキュリティと整合性のため、以下の制約があります：
 
-- **初期化ディレクトリの記録**: `tw init`実行時に現在のディレクトリパスが記録されます
+- **初期化ディレクトリの記録**: `gtw init`実行時に現在のディレクトリパスが記録されます
 - **workerは初期化ディレクトリからのみ作成可能**: 記録されたディレクトリ以外からのworker作成は拒否されます
 - **worktreeディレクトリからの作成禁止**: `worktree/`配下からのworker作成は禁止されます
 
 ```bash
 # 正しい使用例
 cd /project-A
-tw init              # プロジェクトAで初期化
-tw add feature-1     # ✅ 成功
+gtw init              # プロジェクトAで初期化
+gtw add feature-1     # ✅ 成功
 
 cd /project-B
-tw add feature-2     # ❌ 失敗（プロジェクトAで初期化されているため）
+gtw add feature-2     # ❌ 失敗（プロジェクトAで初期化されているため）
 
-tw init              # プロジェクトBで新規初期化
-tw add feature-2     # ✅ 成功
+gtw init              # プロジェクトBで新規初期化
+gtw add feature-2     # ✅ 成功
 ```
 
 ## 前提条件
@@ -56,16 +56,16 @@ tw add feature-2     # ✅ 成功
 ### go install を使用（推奨）
 
 ```bash
-go install github.com/nakamasato/tmux-worker-manager@latest
-ln -s $(which tmux-worker-manager) $(go env GOPATH)/bin/tw
+go install github.com/nakamasato/git-tmux-workspace@latest
+ln -s $(which git-tmux-workspace) $(go env GOPATH)/bin/gtw
 ```
 
 ### または、ソースからビルド
 
 ```bash
 # リポジトリのクローン
-git clone https://github.com/nakamasato/tmux-worker-manager.git
-cd tmux-worker-manager
+git clone https://github.com/nakamasato/git-tmux-workspace.git
+cd git-tmux-workspace
 
 # ビルド
 make build
@@ -82,35 +82,35 @@ make install      # /usr/local/bin にインストール（sudo必要）
 
 ```bash
 # 1. tmuxセッションを初期化
-tw init
+gtw init
 
 # または、カスタム設定で初期化
-tw init --command "claude --dangerously-skip-permissions" --worktree-prefix "work"
+gtw init --command "claude --dangerously-skip-permissions" --worktree-prefix "work"
 
 # 2. 新しいワーカーを作成
-tw add issue-123
+gtw add issue-123
 
 # 3. セッションに接続して作業開始
-tw attach
+gtw attach
 
 # 4. 作業完了後、ワーカーを削除
-tw remove issue-123
+gtw remove issue-123
 
 # 5. セッションを削除
-tw destroy
+gtw destroy
 ```
 
 ### ワーカーの作成
 
 ```bash
 # Issue番号でワーカー作成
-tw add issue-123
+gtw add issue-123
 
 # 機能名でワーカー作成
-tw add feature-auth
+gtw add feature-auth
 
 # バグ修正でワーカー作成
-tw add bug-login-fix
+gtw add bug-login-fix
 ```
 
 ワーカー作成時に自動的に以下が実行されます：
@@ -121,7 +121,7 @@ tw add bug-login-fix
 ### ワーカー一覧の表示
 
 ```bash
-tw list
+gtw list
 ```
 
 出力例：
@@ -135,23 +135,23 @@ feature-auth         inactive        worktree/feature-auth          myproject   
 ### ワーカーの詳細状態確認
 
 ```bash
-tw status issue-123
+gtw status issue-123
 ```
 
 ### ワーカーの削除
 
 ```bash
-tw remove issue-123
+gtw remove issue-123
 ```
 
 ### tmuxセッションの操作
 
 ```bash
 # セッションに接続
-tw attach
+gtw attach
 
 # セッションから切断（Ctrl+b d でも可能）
-tw detach
+gtw detach
 
 # または直接tmuxコマンドで接続
 tmux attach-session -t myproject
@@ -161,10 +161,10 @@ tmux attach-session -t myproject
 
 ```bash
 # worktreeとpaneの整合性をチェック
-tw check
+gtw check
 
 # 不整合を自動修復
-tw repair
+gtw repair
 ```
 
 ### 設定管理
@@ -175,13 +175,13 @@ tw repair
 
 ```bash
 # デフォルト設定で初期化
-tw init
+gtw init
 
 # カスタム設定で初期化
-tw init --command "claude --dangerously-skip-permissions" --worktree-prefix "work"
+gtw init --command "claude --dangerously-skip-permissions" --worktree-prefix "work"
 
 # 設定の確認
-tw config
+gtw config
 ```
 
 #### 初期化コマンドの変更
@@ -190,13 +190,13 @@ tw config
 
 ```bash
 # 現在の設定を表示
-tw config
+gtw config
 
 # Claudeをpermissionsスキップで起動
-tw config set "claude --dangerously-skip-permissions"
+gtw config set "claude --dangerously-skip-permissions"
 
 # 特定の設定を確認
-tw config get
+gtw config get
 ```
 
 #### デフォルト設定
@@ -208,24 +208,24 @@ tw config get
 
 ```bash
 # Claude with bypassed permissions
-tw config set "claude --dangerously-skip-permissions"
+gtw config set "claude --dangerously-skip-permissions"
 
 # npx でClaudeを使用
-tw config set "npx claude"
+gtw config set "npx claude"
 
 # 開発サーバーを起動
-tw config set "npm run dev"
+gtw config set "npm run dev"
 
 # カスタムworktreeディレクトリ
-tw init --worktree-prefix "workspace"
+gtw init --worktree-prefix "workspace"
 
 # 組み合わせ設定
-tw init --command "npx claude" --worktree-prefix "features"
+gtw init --command "npx claude" --worktree-prefix "features"
 ```
 
 ## ワーカーの構成
 
-各ワーカーは専用のtmuxペインとして作成されます。`tw init` で初期セッションを作成し、`tw add` で新しいワーカーペインを追加します。
+各ワーカーは専用のtmuxペインとして作成されます。`gtw init` で初期セッションを作成し、`gtw add` で新しいワーカーペインを追加します。
 
 ### tmuxセッション全体の構成例
 
@@ -356,19 +356,19 @@ make clean
 
 ```bash
 # Claudeコマンドを変更
-tw config set "claude --dangerously-skip-permissions"
+gtw config set "claude --dangerously-skip-permissions"
 
 # 異なるClaudeバージョンを使用
-tw config set "npx claude@latest"
+gtw config set "npx claude@latest"
 
 # ローカルのClaudeを使用
-tw config set "/usr/local/bin/claude"
+gtw config set "/usr/local/bin/claude"
 
 # 開発サーバーを起動
-tw config set "npm run dev"
+gtw config set "npm run dev"
 
 # Python環境をセットアップ
-tw config set "python -m venv venv && source venv/bin/activate && pip install -r requirements.txt"
+gtw config set "python -m venv venv && source venv/bin/activate && pip install -r requirements.txt"
 ```
 
 ### ワーカーテンプレートの変更
@@ -394,7 +394,7 @@ tmux list-panes -t <session-name>
 tmux has-session -t <session-name>
 
 # セッションを初期化
-tw init
+gtw init
 
 # 現在のプロジェクトディレクトリを確認
 pwd
@@ -450,13 +450,13 @@ mkdir -p worktree
 
 ```bash
 # 整合性をチェック
-tw check
+gtw check
 
 # 自動修復を実行
-tw repair
+gtw repair
 
 # 手動で状態を確認
-tw list
+gtw list
 git worktree list
 tmux list-panes -a
 ```
@@ -470,7 +470,7 @@ tmux list-panes -a
 cat .tmux-workers.json
 
 # 設定を再確認
-tw config
+gtw config
 
 # 設定ファイルのバックアップ
 cp .tmux-workers.json .tmux-workers.json.backup

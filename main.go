@@ -33,9 +33,9 @@ type Config struct {
 const configFile = ".tmux-workers.json"
 
 var rootCmd = &cobra.Command{
-	Use:   "tw",
+	Use:   "gtw",
 	Short: "Manage tmux workers with git worktrees and Claude",
-	Long:  `tw (tmux worker) is a CLI tool that creates isolated development environments with git worktrees, tmux sessions, and configurable initialization commands.`,
+	Long:  `gtw (git-tmux-workspace) is a CLI tool that creates isolated development environments with git worktrees, tmux sessions, and configurable initialization commands.`,
 }
 
 func init() {
@@ -247,7 +247,7 @@ func addWorker(id string) {
 			fmt.Printf("Error: Workers can only be created from the initialized project directory\n")
 			fmt.Printf("Expected: %s\n", config.ProjectPath)
 			fmt.Printf("Current:  %s\n", cwd)
-			fmt.Printf("Please cd to the project directory or run 'tw init' to reinitialize\n")
+			fmt.Printf("Please cd to the project directory or run 'gtw init' to reinitialize\n")
 			return
 		}
 	}
@@ -293,7 +293,7 @@ func addWorker(id string) {
 	// Check if session exists
 	cmd = exec.Command("tmux", "has-session", "-t", sessionName)
 	if cmd.Run() != nil {
-		fmt.Printf("Error: Session '%s' does not exist. Run 'tm init' first.\n", sessionName)
+		fmt.Printf("Error: Session '%s' does not exist. Run 'gtw init' first.\n", sessionName)
 		exec.Command("git", "worktree", "remove", worktreePath).Run()
 		return
 	}
@@ -641,7 +641,7 @@ func attachSession() {
 	// Check if session exists
 	cmd := exec.Command("tmux", "has-session", "-t", sessionName)
 	if cmd.Run() != nil {
-		fmt.Printf("Error: Session '%s' does not exist. Run 'tm init' first.\n", sessionName)
+		fmt.Printf("Error: Session '%s' does not exist. Run 'gtw init' first.\n", sessionName)
 		return
 	}
 
@@ -701,7 +701,7 @@ func checkConsistency() {
 	// Check if session exists
 	cmd := exec.Command("tmux", "has-session", "-t", sessionName)
 	if cmd.Run() != nil {
-		fmt.Printf("Error: Session '%s' does not exist. Run 'tm init' first.\n", sessionName)
+		fmt.Printf("Error: Session '%s' does not exist. Run 'gtw init' first.\n", sessionName)
 		return
 	}
 
@@ -802,7 +802,7 @@ func checkConsistency() {
 		fmt.Printf("%d. %s\n", i+1, inc.Description)
 	}
 	
-	fmt.Println("\nRun 'tm repair' to fix these inconsistencies.")
+	fmt.Println("\nRun 'gtw repair' to fix these inconsistencies.")
 }
 
 func repairInconsistencies() {
@@ -814,7 +814,7 @@ func repairInconsistencies() {
 	// Check if session exists
 	cmd := exec.Command("tmux", "has-session", "-t", sessionName)
 	if cmd.Run() != nil {
-		fmt.Printf("Error: Session '%s' does not exist. Run 'tm init' first.\n", sessionName)
+		fmt.Printf("Error: Session '%s' does not exist. Run 'gtw init' first.\n", sessionName)
 		return
 	}
 
@@ -1025,15 +1025,15 @@ func showConfig() {
 	
 	fmt.Println()
 	fmt.Println("Usage:")
-	fmt.Println("  tw config set <command>     Set initialization command")
-	fmt.Println("  tw config get               Get initialization command")
-	fmt.Println("  tw init --command <cmd> --worktree-prefix <prefix>  Initialize with custom settings")
+	fmt.Println("  gtw config set <command>     Set initialization command")
+	fmt.Println("  gtw config get               Get initialization command")
+	fmt.Println("  gtw init --command <cmd> --worktree-prefix <prefix>  Initialize with custom settings")
 	fmt.Println()
 	fmt.Println("Examples:")
-	fmt.Println("  tw config set 'claude --dangerously-skip-permissions'")
-	fmt.Println("  tw config set 'npx claude'")
-	fmt.Println("  tw config set 'npm run dev'")
-	fmt.Println("  tw init --command 'claude' --worktree-prefix 'work'")
+	fmt.Println("  gtw config set 'claude --dangerously-skip-permissions'")
+	fmt.Println("  gtw config set 'npx claude'")
+	fmt.Println("  gtw config set 'npm run dev'")
+	fmt.Println("  gtw init --command 'claude' --worktree-prefix 'work'")
 }
 
 
